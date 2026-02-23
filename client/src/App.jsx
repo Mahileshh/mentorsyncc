@@ -1,20 +1,47 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import { BrowserRouter,Routes,Route } from 'react-router-dom'
-import MentorDashboard from './pages/mentor/Dashboard'
+import { Routes, Route, Navigate } from "react-router-dom";
+import Login from "./pages/Login";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import MentorLayout from "./layouts/MentorLayout";
+import StudentLayout from "./layouts/StudentLayout";
+import MentorDashboard from "./pages/mentor/Dashboard";
+import Students from "./pages/mentor/Students";
+import LeaveRequests from "./pages/mentor/LeaveRequests";
+import PlacementRequests from "./pages/mentor/PlacementRequests";
+import RewardPoints from "./pages/mentor/RewardPoints";
+import StudentDashboard from "./pages/student/Dashboard";
+import ApplyLeave from "./pages/student/ApplyLeave";
+import PlacementRequest from "./pages/student/PlacementRequest";
+import MyRewards from "./pages/student/MyRewards";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-   <BrowserRouter>
-   <Routes>
-    <Route path='/' element={<MentorDashboard/>}/>
-   </Routes>
-   </BrowserRouter>
-  )
+    <Routes>
+      <Route path="/login" element={<Login />} />
+
+      {/* Mentor */}
+      <Route element={<ProtectedRoute role="mentor" />}>
+        <Route path="/mentor" element={<MentorLayout />}>
+          <Route index element={<MentorDashboard />} />
+          <Route path="students" element={<Students />} />
+          <Route path="leaves" element={<LeaveRequests />} />
+          <Route path="placements" element={<PlacementRequests />} />
+          <Route path="rewards" element={<RewardPoints />} />
+        </Route>
+      </Route>
+
+      {/* Student */}
+      <Route element={<ProtectedRoute role="student" />}>
+        <Route path="/student" element={<StudentLayout />}>
+          <Route index element={<StudentDashboard />} />
+          <Route path="apply-leave" element={<ApplyLeave />} />
+          <Route path="placement" element={<PlacementRequest />} />
+          <Route path="rewards" element={<MyRewards />} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<Navigate to="/login" />} />
+    </Routes>
+  );
 }
 
-export default App
+export default App;

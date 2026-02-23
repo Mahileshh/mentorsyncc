@@ -1,6 +1,6 @@
 const Student = require("../models/Student");
 const MentorStudent = require("../models/MentorStudent");
-const RewardPoint = require("../models/RewardPoint");
+const RewardPoint = require("../models/RewardPoints");
 const Placement = require("../models/PlacementRequest");
 
 // Add student profile
