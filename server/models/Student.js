@@ -10,6 +10,7 @@ const studentSchema = new mongoose.Schema({
   backlogs: Number,
   attendance: { type: Number, default: 75 },
   rewardPointsTotal: { type: Number, default: 0 },
+  totalLeaves: { type: Number, default: 15 },
 });
 
 module.exports = mongoose.model("Student", studentSchema);

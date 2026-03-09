@@ -10,6 +10,7 @@ import PlacementRequests from "./pages/mentor/PlacementRequests";
 import RewardPoints from "./pages/mentor/RewardPoints";
 import StudentDashboard from "./pages/student/Dashboard";
 import ApplyLeave from "./pages/student/ApplyLeave";
+import LeaveHistory from "./pages/student/LeaveHistory";
 import PlacementRequest from "./pages/student/PlacementRequest";
 import MyRewards from "./pages/student/MyRewards";
 
@@ -34,6 +35,7 @@ function App() {
         <Route path="/student" element={<StudentLayout />}>
           <Route index element={<StudentDashboard />} />
           <Route path="apply-leave" element={<ApplyLeave />} />
+          <Route path="leave-history" element={<LeaveHistory />} />
           <Route path="placement" element={<PlacementRequest />} />
           <Route path="rewards" element={<MyRewards />} />
         </Route>

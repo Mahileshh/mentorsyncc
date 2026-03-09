@@ -7,6 +7,7 @@ const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const mentorRoutes = require("./routes/mentorRoutes");
 const studentRoutes = require("./routes/studentRoutes");
+const publicRoutes = require("./routes/publicRoutes");
 
 const app = express();
 
@@ -21,6 +22,7 @@ const startServer = async () => {
     app.use("/api/admin", adminRoutes);
     app.use("/api/mentor", mentorRoutes);
     app.use("/api/student", studentRoutes);
+    app.use("/api", publicRoutes);
 
     // Global Error Handler
     app.use((err, req, res, next) => {

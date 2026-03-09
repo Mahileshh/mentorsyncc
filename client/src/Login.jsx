@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Container, Card, CardContent, TextField, Button, Typography } from "@mui/material";
+import { Container, Card, CardContent, TextField, Button, Typography, Box, Chip } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
@@ -9,10 +9,20 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    const res = await api.post("/login", { email, password });
+    const res = await api.post("/auth/login", { email, password });
     localStorage.setItem("token", res.data.token);
     localStorage.setItem("role", res.data.role);
     navigate(`/${res.data.role}`);
+  };
+
+  const quickEmails = [
+    "chandru.k@mentor.com",
+    "dharneshk7376232cb109@student.com",
+  ];
+
+  const handleQuickFill = (e) => {
+    setEmail(e);
+    setPassword("123456");
   };
 
   return (
@@ -33,6 +43,20 @@ export default function Login() {
             onClick={handleLogin}>
             Login
           </Button>
+
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="caption" sx={{ display: "block", mb: 1 }}>
+              Quick login emails:
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              {quickEmails.map((q) => (
+                <Chip key={q} label={q} onClick={() => handleQuickFill(q)} clickable />
+              ))}
+            </Box>
+            <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary" }}>
+              Default password: 123456
+            </Typography>
+          </Box>
         </CardContent>
       </Card>
     </Container>

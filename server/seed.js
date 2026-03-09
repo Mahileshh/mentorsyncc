@@ -1,10 +1,13 @@
+
 require("dotenv").config();
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+
 const User = require("./models/User");
 const Student = require("./models/Student");
+const MentorStudent = require("./models/MentorStudent");
 
-const rawData = [
+ const rawData = [
     "3	III	7376232CB103	ARUN RAJAN N M	B. Tech.	COMPUTER SCIENCE AND BUSINESS SYSTEMS	Mr. CHANDRU K S CSBS	600.00",
     "4	III	7376232CB104	ASHWIN S	B. Tech.	COMPUTER SCIENCE AND BUSINESS SYSTEMS	Mr. CHANDRU K S CSBS	536.00",
     "5	III	7376232CB105	BHARATHKUMAR N	B. Tech.	COMPUTER SCIENCE AND BUSINESS SYSTEMS	Mr. CHANDRU K S CSBS	300.00",
@@ -46,144 +49,149 @@ const rawData = [
     "41	III	7376232CB147	SHANMUGA RAMANA N	B. Tech.	COMPUTER SCIENCE AND BUSINESS SYSTEMS	Ms. VAISHNAVI N CSBS	618.00"
 ];
 
+const defaultPassword = "123456";
+const hashedPassword = bcrypt.hashSync(defaultPassword, 10);
+
 const connectDB = async () => {
-    try {
-        await mongoose.connect(process.env.MONGO_URI);
-        console.log("MongoDB connected");
-    } catch (err) {
-        console.error(err);
-        process.exit(1);
-    }
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("MongoDB connected");
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
 };
 
 const seedData = async () => {
-    await connectDB();
+  await connectDB();
+  console.log("Seeding started...");
 
-    console.log("Parsing data...");
+  // =============================
+  // 1️⃣ Extract Unique Mentors
+  // =============================
+  const mentorsMap = new Map();
 
+  for (const line of rawData) {
+    const parts = line.split(/\t+/);
+    if (parts.length > 6) {
+      const cleanName = parts[6]
+        .replace(/Mr\.|Ms\.|Dr\.?|Mrs\./g, "")
+        .trim();
 
+      const nameParts = cleanName.split(" ");
+      const email =
+        `${nameParts[0]?.toLowerCase()}.` +
+        `${nameParts[1]?.toLowerCase() || "mentor"}@mentor.com`;
 
-    // 1. Extract Unique Mentors
-    const mentorsMap = new Map(); // Name -> User Object
+      if (!mentorsMap.has(cleanName)) {
+        mentorsMap.set(cleanName, { name: cleanName, email });
+      }
+    }
+  }
 
-    for (const line of rawData) {
-        const parts = line.split(/\t+/);
-        if (parts.length > 6) {
-            // Clean up mentor name: "Mr. CHANDRU K S CSBS" -> "CHANDRU K S" (heuristic)
-            const cleanName = parts[6].replace(/Mr\.|Ms\.|Dr|Mrs\./g, "").trim();
-            // simple email gen
-            const emailName = cleanName.split(' ')[0].toLowerCase() + "." + cleanName.split(' ')[1]?.toLowerCase();
-            const email = `${emailName}@mentor.com`;
+  const mentorUserMap = new Map();
 
-            if (!mentorsMap.has(cleanName)) {
-                mentorsMap.set(cleanName, { name: cleanName, email });
-            }
-        }
+  for (const [name, data] of mentorsMap) {
+    let user = await User.findOne({ email: data.email });
+
+    if (!user) {
+      user = await User.create({
+        name: data.name,
+        email: data.email,
+        password: hashedPassword,
+        role: "mentor",
+      });
+      console.log(`Created Mentor: ${data.name}`);
     }
 
-    // Create Mentor Users
-    console.log(`Found ${mentorsMap.size} unique mentors.`);
-    const mentorUserMap = new Map(); // Name -> User Document
+    mentorUserMap.set(name, user);
+  }
 
-    for (const [name, data] of mentorsMap) {
-        let user = await User.findOne({ email: data.email });
-        if (!user) {
-            user = await User.create({
-                name: data.name,
-                email: data.email,
-                password: hashedPassword,
-                role: "mentor"
-            });
-            console.log(`Created Mentor: ${data.name}`);
-        }
-        mentorUserMap.set(name, user);
+  // =============================
+  // 2️⃣ Create Students + Mapping
+  // =============================
+  for (const line of rawData) {
+    const parts = line.split(/\t+/);
+    if (parts.length < 8) continue;
+
+    const regNo = parts[2].trim();
+    const name = parts[3].trim();
+    const dept = parts[5].trim();
+
+    // Safe email: firstname + lastInitial + regNo
+    const nameParts = name.split(" ");
+    const email =
+      `${nameParts[0].toLowerCase()}` +
+      `${nameParts[1]?.[0]?.toLowerCase() || ""}` +
+      `${regNo.toLowerCase()}@student.com`;
+
+    // Clean reward points
+    let pointsStr = parts[7].trim().replace(/,/g, "");
+    let points = 0;
+
+    if (pointsStr.startsWith("(") && pointsStr.endsWith(")")) {
+      points = -parseFloat(pointsStr.replace(/[()]/g, ""));
+    } else {
+      points = parseFloat(pointsStr);
     }
 
+    try {
+      // 1️⃣ Create User
+      let user = await User.findOne({ email });
 
+      if (!user) {
+        user = await User.create({
+          name,
+          email,
+          password: hashedPassword,
+          role: "student",
+        });
+        console.log(`Created Student User: ${name}`);
+      }
 
-    for (const line of rawData) {
-        // Simple tab/space split handling
-        // Column Index Estimation: 
-        // 0: SL No, 1: Year, 2: RegNo, 3: Name, 4: Degree, 5: Dept, 6: Mentor, 7: Points
+      // 2️⃣ Create Student Profile
+      let studentProfile = await Student.findOne({ userId: user._id });
 
-        // Split by tabs or multiple spaces
-        const parts = line.split(/\t+/);
+      if (!studentProfile) {
+        studentProfile = await Student.create({
+          userId: user._id,
+          department: dept,
+          batch: "2023-2027",
+          rewardPointsTotal: points || 0,
+          cgpa: 0,
+          attendance: 75,
+          backlogs: 0,
+        });
+        console.log(`Created Student Profile: ${name}`);
+      }
 
-        if (parts.length < 5) continue;
+      // 3️⃣ Assign Mentor
+      const mentorNameRaw = parts[6]
+        .replace(/Mr\.|Ms\.|Dr\.?|Mrs\./g, "")
+        .trim();
 
-        const regNo = parts[2].trim();
-        const name = parts[3].trim();
-        const dept = parts[5].trim();
+      const mentorUser = mentorUserMap.get(mentorNameRaw);
 
-        // Clean up points: remove commas, parens for negative
-        let pointsStr = parts[7].trim().replace(/,/g, '');
-        let points = 0;
-        if (pointsStr.startsWith('(') && pointsStr.endsWith(')')) {
-            points = -1 * parseFloat(pointsStr.replace(/[()]/g, ''));
-        } else {
-            points = parseFloat(pointsStr);
+      if (mentorUser && studentProfile) {
+        const existingMapping = await MentorStudent.findOne({
+          studentId: studentProfile._id,
+        });
+
+        if (!existingMapping) {
+          await MentorStudent.create({
+            mentorId: mentorUser._id,
+            studentId: studentProfile._id,
+          });
+          console.log(`Assigned ${name} to ${mentorUser.name}`);
         }
-
-        // Generate email: firstname.regno@karpagam.edu.in (Example)
-        const email = `${name.split(' ')[0].toLowerCase()}.${regNo.toLowerCase()}@example.com`;
-
-        try {
-            // 1. Create User
-            // Check if user exists
-            let user = await User.findOne({ email });
-            if (!user) {
-                user = await User.create({
-                    name,
-                    email,
-                    password: hashedPassword,
-                    role: "student"
-                });
-                console.log(`Created User: ${name}`);
-            }
-
-            // 2. Create Student Profile
-            const existingStudent = await Student.findOne({ userId: user._id });
-            if (!existingStudent) {
-                await Student.create({
-                    userId: user._id,
-                    department: dept,
-                    batch: "2023-2027", // Assuming batch based on context (III year) or simple placeholder
-                    rewardPointsTotal: points || 0,
-                    // Parse other fields if needed, set defaults
-                    cgpa: 0,
-                    attendance: 75,
-                    backlogs: 0
-                });
-                console.log(`Created Student Profile: ${name}`);
-            }
-
-            // 3. Assign to Mentor
-            const mentorNameRaw = parts[6].replace(/Mr\.|Ms\.|Dr|Mrs\./g, "").trim();
-            const mentorUser = mentorUserMap.get(mentorNameRaw);
-
-            if (mentorUser) {
-                const MentorStudent = require("./models/MentorStudent");
-                // Check if mapping exists
-                const existingMapping = await MentorStudent.findOne({
-                    studentId: student._id
-                });
-
-                if (!existingMapping) {
-                    await MentorStudent.create({
-                        mentorId: mentorUser._id,
-                        studentId: student._id
-                    });
-                    console.log(`Assigned ${name} to ${mentorUser.name}`);
-                }
-            }
-
-        } catch (error) {
-            console.error(`Error processing ${name}:`, error.message);
-        }
+      }
+    } catch (error) {
+      console.error(`Error processing ${name}:`, error.message);
     }
+  }
 
-    console.log("Seeding complete!");
-    process.exit();
+  console.log("Seeding complete!");
+  process.exit();
 };
 
 seedData();
