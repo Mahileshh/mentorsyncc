@@ -65,10 +65,10 @@ export default function ApplyLeave() {
         setBalanceLoading(true);
         const [profRes, leavesRes] = await Promise.all([
           api.get("/student/profile"),
-          api.get("/leaverequests")
+          api.get("/student/my-leaves")
         ]);
 
-        const approvedLeaves = leavesRes.data.filter(l => l.status === "approved" || l.status === "Approved");
+        const approvedLeaves = leavesRes.data.filter(l => l.status === "approved");
         const usedDays = approvedLeaves.reduce((acc, l) => {
           const from = new Date(l.fromDate);
           const to = new Date(l.toDate);
@@ -76,9 +76,10 @@ export default function ApplyLeave() {
           return acc + diffDays;
         }, 0);
 
-        const total      = profRes.data.totalLeaves || 15;
+        // maxLeaves is the system-wide fixed constant (same for everyone)
+        const total      = profRes.data.maxLeaves || 15;
         const attendance = profRes.data.attendance ?? 75;
-        // Use the server-computed attendance-based quota
+        // Attendance-based quota computed server-side
         const quota      = profRes.data.attendanceBasedLeaveQuota ?? total;
 
         setLeaveBalance({
@@ -147,9 +148,17 @@ export default function ApplyLeave() {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      // Auto-navigate to the step that owns the first error so the user can see it
+      const step0Fields = ["reason", "fromDate", "toDate"];
+      const step1Fields = ["contactNumber", "alternateArrangements"];
+      if (step0Fields.some((f) => newErrors[f])) {
+        setActiveStep(0);
+      } else if (step1Fields.some((f) => newErrors[f])) {
+        setActiveStep(1);
+      }
       setSnackbar({
         open: true,
-        message: "Please fix the errors before submitting",
+        message: "Please fix the highlighted errors before submitting",
         severity: "error"
       });
       return;
@@ -197,15 +206,30 @@ export default function ApplyLeave() {
 
   const handleNext = () => {
     if (activeStep === 0) {
-      if (!formData.reason || !formData.fromDate || !formData.toDate) {
-        setSnackbar({
-          open: true,
-          message: "Please fill in all required fields",
-          severity: "warning"
-        });
+      // Run the same strict validation as submit so errors are caught early
+      const stepErrors = {};
+      if (!formData.reason.trim()) {
+        stepErrors.reason = "Reason is required";
+      } else if (formData.reason.length < 10) {
+        stepErrors.reason = "Please provide a detailed reason (minimum 10 characters)";
+      }
+      if (!formData.fromDate) stepErrors.fromDate = "Start date is required";
+      if (!formData.toDate) stepErrors.toDate = "End date is required";
+      if (formData.fromDate && formData.toDate && formData.fromDate > formData.toDate) {
+        stepErrors.toDate = "End date cannot be before start date";
+      }
+      if (Object.keys(stepErrors).length > 0) {
+        setErrors(stepErrors);
+        setSnackbar({ open: true, message: "Please fix the highlighted errors", severity: "warning" });
         return;
       }
     }
+    if (activeStep === 1 && formData.contactNumber && !/^[0-9]{10}$/.test(formData.contactNumber)) {
+      setErrors({ contactNumber: "Please enter a valid 10-digit phone number" });
+      setSnackbar({ open: true, message: "Please fix the highlighted errors", severity: "warning" });
+      return;
+    }
+    setErrors({});
     setActiveStep((prevStep) => prevStep + 1);
   };
 
@@ -448,10 +472,8 @@ export default function ApplyLeave() {
           {/* Leave Balance Alert — attendance-aware */}
           {!balanceLoading && (() => {
             const att = leaveBalance.attendance ?? 75;
-            const tc = att >= 90 ? { label: "Excellent", color: "success" } :
-                       att >= 75 ? { label: "Good",      color: "info"    } :
-                       att >= 60 ? { label: "Low",       color: "warning" } :
-                                   { label: "Critical",  color: "error"   };
+            const tc = att >= 75 ? { label: "Good",      color: "success" } :
+                                   { label: "Low",       color: "warning" };
             return (
               <Alert
                 severity={tc.color}
@@ -460,8 +482,8 @@ export default function ApplyLeave() {
               >
                 <strong>{leaveBalance.remaining} of {leaveBalance.quota} leave days</strong> remaining based on your
                 {" "}<strong>{att}% attendance</strong> ({tc.label}).
-                {" "}{leaveBalance.used > 0 && `${leaveBalance.usedDays} days already used. `}
-                Max allowed: {leaveBalance.total} days.
+                {" "}{leaveBalance.usedDays > 0 && `${leaveBalance.usedDays} days already used. `}
+                System max: {leaveBalance.total} days for all students. (≥75% attendance grants full quota)
               </Alert>
             );
           })()}

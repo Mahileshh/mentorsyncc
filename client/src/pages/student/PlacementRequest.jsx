@@ -101,7 +101,7 @@ export default function PlacementRequest() {
       </Box>
 
       {/* Summary banner if approved */}
-      {latestApproved && (
+      {/* {latestApproved && (
         <Box
           sx={{
             mb: 3,
@@ -124,7 +124,7 @@ export default function PlacementRequest() {
             </Typography>
           </Box>
         </Box>
-      )}
+      )} */}
 
       {/* Tabs */}
       <Tabs

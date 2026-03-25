@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { login } from "../services/authService";
 import {
   Box,
   TextField,
@@ -11,6 +11,7 @@ import {
   Divider,
   Alert,
   Chip,
+  Snackbar,
 } from "@mui/material";
 import {
   Visibility,
@@ -25,38 +26,86 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   const quickEmails = [
     { label: "Mentor", email: "chandru.k@mentor.com" },
     { label: "Student", email: "dharneshk7376232cb109@student.com" },
   ];
 
+  useEffect(() => {
+    const emailInput = document.querySelector("#email");
+    if (emailInput) emailInput.focus();
+  }, []);
+
+  const validateForm = () => {
+    let valid = true;
+    setEmailError("");
+    setPasswordError("");
+
+    if (!form.email.trim()) {
+      setEmailError("Email is required");
+      valid = false;
+    } else if (!/^\S+@\S+\.\S+$/.test(form.email)) {
+      setEmailError("Enter a valid email address");
+      valid = false;
+    }
+
+    if (!form.password.trim()) {
+      setPasswordError("Password is required");
+      valid = false;
+    } else if (form.password.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+      valid = false;
+    }
+
+    return valid;
+  };
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError("");
+    if (e.target.name === "email") setEmailError("");
+    if (e.target.name === "password") setPasswordError("");
   };
 
   const handleQuickFill = (email) => {
     setForm({ email, password: "123456" });
     setError("");
+    setEmailError("");
+    setPasswordError("");
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
+
     setLoading(true);
     setError("");
-    try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", form);
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("role", res.data.role);
-      localStorage.setItem("name", res.data.name);
-      if (res.data.email) localStorage.setItem("email", res.data.email);
 
-      if (res.data.role === "student") navigate("/student");
-      else if (res.data.role === "mentor") navigate("/mentor");
-      else if (res.data.role === "admin") navigate("/admin");
+    try {
+      const data = await login(form);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("name", data.name);
+      if (data.email) localStorage.setItem("email", data.email);
+
+      setSnackbar({ open: true, message: "Logged in successfully", severity: "success" });
+
+      if (data.role === "student") navigate("/student");
+      else if (data.role === "mentor") navigate("/mentor");
+      else if (data.role === "admin") navigate("/admin");
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid email or password.");
+      const message = err.response?.data?.message || err.message || "Invalid email or password.";
+      setError(message);
+      setSnackbar({ open: true, message, severity: "error" });
     } finally {
       setLoading(false);
     }
@@ -202,6 +251,7 @@ function Login() {
               </Typography>
               <TextField
                 fullWidth
+                id="email"
                 name="email"
                 type="email"
                 placeholder="you@example.com"
@@ -209,6 +259,9 @@ function Login() {
                 onChange={handleChange}
                 required
                 size="small"
+                error={!!emailError}
+                helperText={emailError || ""}
+                aria-describedby="email-helper-text"
                 sx={{ "& .MuiOutlinedInput-root": { borderRadius: "6px" } }}
               />
             </Box>
@@ -216,12 +269,14 @@ function Login() {
             <Box sx={{ mb: 3 }}>
               <Typography
                 component="label"
+                htmlFor="password"
                 sx={{ fontSize: "0.8rem", fontWeight: 600, color: "#374151", display: "block", mb: 0.75 }}
               >
                 Password
               </Typography>
               <TextField
                 fullWidth
+                id="password"
                 name="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
@@ -229,6 +284,9 @@ function Login() {
                 onChange={handleChange}
                 required
                 size="small"
+                error={!!passwordError}
+                helperText={passwordError || ""}
+                aria-describedby="password-helper-text"
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
@@ -251,7 +309,7 @@ function Login() {
               type="submit"
               variant="contained"
               fullWidth
-              disabled={loading}
+              disabled={loading || !form.email || !form.password}
               endIcon={<ArrowIcon />}
               sx={{
                 py: 1.15,
@@ -295,6 +353,14 @@ function Login() {
               Default password: 123456
             </Typography>
           </Box>
+
+          <Snackbar
+            open={snackbar.open}
+            autoHideDuration={4000}
+            onClose={handleCloseSnackbar}
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            message={snackbar.message}
+          />
         </Box>
       </Box>
     </Box>

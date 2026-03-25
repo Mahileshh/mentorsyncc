@@ -4,7 +4,7 @@ const MentorStudent = require("../models/MentorStudent");
 const Student = require("../models/Student");
 const User = require("../models/User");
 const RewardPoint = require("../models/RewardPoints");
-
+const Exemption = require("../models/CourseExemption");
 // Approve Leave
 exports.approveLeave = async (req, res) => {
   try {
@@ -151,6 +151,95 @@ exports.updatePlacement = async (req, res) => {
   }
 };
 
+// --- Course Exemptions ---
+
+exports.getMyExemptions = async (req, res) => {
+  try {
+    console.log("---- Fetching Exemptions for Mentor ----");
+    const mentorId = req.user.id;
+    const assignedStudents = await MentorStudent.find({ mentorId }).select("studentId");
+    const studentIds = assignedStudents.map((m) => m.studentId);
+    console.log("Assigned student IDs:", studentIds);
+
+    const exemptions = await Exemption.find({ studentId: { $in: studentIds } })
+      .populate({
+        path: "studentId",
+        populate: { path: "userId", select: "name email" },
+      })
+      .sort({ createdAt: -1 });
+
+    console.log(`Found ${exemptions.length} exemptions.`);
+
+    const formatted = exemptions.map((e) => ({
+      _id: e._id,
+      studentName: e.studentId?.userId?.name || "Unknown",
+      studentEmail: e.studentId?.userId?.email || "",
+      subjectName: e.subjectName,
+      reason: e.reason,
+      status: e.status,
+      rejectionReason: e.rejectionReason,
+      createdAt: e.createdAt,
+    }));
+
+    res.json(formatted);
+  } catch (err) {
+    console.error("getMyExemptions error block triggered:", err);
+    res.status(500).json({ message: "Server error", detail: err.message });
+  }
+};
+
+exports.updateExemption = async (req, res) => {
+  try {
+    const mentorId = req.user.id;
+    const { id } = req.params;
+    const { status, rejectionReason } = req.body;
+
+    const allowed = ["Approved", "Rejected"];
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ message: "Invalid status value." });
+    }
+
+
+    const exemption = await Exemption.findById(id);
+    if (!exemption) {
+      return res.status(404).json({ message: "Exemption record not found." });
+    }
+
+    if (exemption.status !== "Pending Mentor") {
+      return res.status(409).json({ message: `Exemption is already '${exemption.status}'` });
+    }
+
+    const isAssigned = await MentorStudent.findOne({ mentorId, studentId: exemption.studentId });
+    if (!isAssigned) {
+      return res.status(403).json({ message: "Not authorized to update this student." });
+    }
+
+    if (status === "Rejected" && !rejectionReason?.trim()) {
+      return res.status(400).json({ message: "A rejection reason is required." });
+    }
+
+    await Exemption.findByIdAndUpdate(id, {
+      status,
+      rejectionReason: status === "Rejected" ? rejectionReason.trim() : "",
+    });
+
+    // Update the Student's enrolledCourses array
+    const student = await Student.findById(exemption.studentId);
+    if (student) {
+      const courseIndex = student.enrolledCourses.findIndex(c => c.name === exemption.subjectName);
+      if (courseIndex !== -1) {
+        student.enrolledCourses[courseIndex].status = status === "Approved" ? "Exempted" : "Enrolled";
+        await student.save();
+      }
+    }
+
+    res.json({ message: `Exemption ${status}` });
+  } catch (err) {
+    console.error("updateExemption error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // Get students assigned to the logged-in mentor
 exports.getMyStudents = async (req, res) => {
   try {
@@ -185,10 +274,48 @@ exports.getMyStudents = async (req, res) => {
 exports.getStudentRewards = async (req, res) => {
   try {
     const { studentId } = req.params;
-    const rewards = await RewardPoint.find({ studentId }).sort({ date: -1 });
+    const rewards = await RewardPoint.find({ studentId }).sort({ createdAt: -1 });
     res.json(rewards);
   } catch (err) {
     console.error("getStudentRewards error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Award reward points to a student
+exports.awardRewardPoints = async (req, res) => {
+  try {
+    const mentorId = req.user.id;
+    const { studentId } = req.params;
+    const { description, points } = req.body;
+
+    if (!description?.trim()) {
+      return res.status(400).json({ message: "Description is required" });
+    }
+    const pts = parseInt(points, 10);
+    if (!pts || pts <= 0) {
+      return res.status(400).json({ message: "Points must be a positive number" });
+    }
+
+    // Ownership check — student must be assigned to this mentor
+    const isAssigned = await MentorStudent.findOne({ mentorId, studentId });
+    if (!isAssigned) {
+      return res.status(403).json({ message: "You are not authorized to award points to this student" });
+    }
+
+    const reward = await RewardPoint.create({
+      studentId,
+      description: description.trim(),
+      points: pts,
+      addedBy: mentorId,
+    });
+
+    // Increment the denormalized total for fast reads
+    await Student.findByIdAndUpdate(studentId, { $inc: { rewardPointsTotal: pts } });
+
+    res.status(201).json(reward);
+  } catch (err) {
+    console.error("awardRewardPoints error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -209,20 +336,14 @@ exports.getStudentLeaves = async (req, res) => {
 exports.getStudentAcademics = async (req, res) => {
   try {
     const { studentId } = req.params;
-    const student = await Student.findById(studentId).select("cgpa attendance backlogs marks totalLeaves");
+    const student = await Student.findById(studentId).select("cgpa attendance backlogs marks totalLeaves enrolledCourses");
     if (!student) return res.status(404).json({ message: "Student not found" });
 
     const attendance  = student.attendance  ?? 75;
-    const totalLeaves = student.totalLeaves ?? 15;
+    const MAX_LEAVES  = 15; // fixed for all students
+    const quota       = attendance >= 75 ? MAX_LEAVES : Math.floor(MAX_LEAVES * (attendance / 75));
 
-    // Same tier formula as studentController
-    let quota;
-    if      (attendance >= 90) quota = totalLeaves;
-    else if (attendance >= 75) quota = Math.floor(totalLeaves * 0.8);
-    else if (attendance >= 60) quota = Math.floor(totalLeaves * 0.5);
-    else                       quota = Math.floor(totalLeaves * 0.25);
-
-    res.json({ ...student.toObject(), attendanceBasedLeaveQuota: quota });
+    res.json({ ...student.toObject(), maxLeaves: MAX_LEAVES, attendanceBasedLeaveQuota: quota });
   } catch (err) {
     console.error("getStudentAcademics error:", err);
     res.status(500).json({ message: "Server error" });

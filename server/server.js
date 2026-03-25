@@ -2,6 +2,8 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
+const validateEnv = require("./middleware/validateEnv");
+const errorHandler = require("./middleware/errorHandler");
 
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
@@ -13,6 +15,7 @@ const app = express();
 
 const startServer = async () => {
   try {
+    validateEnv();
     await connectDB();
 
     app.use(cors());
@@ -25,10 +28,7 @@ const startServer = async () => {
     app.use("/api", publicRoutes);
 
     // Global Error Handler
-    app.use((err, req, res, next) => {
-      console.error(err.stack);
-      res.status(500).json({ message: "Something went wrong!" });
-    });
+    app.use(errorHandler);
 
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

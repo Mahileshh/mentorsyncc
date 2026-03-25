@@ -147,7 +147,7 @@ export default function StudentDetails({ student, onBack }) {
   const latestPlacement = studentData.placements[studentData.placements.length - 1];
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 3, height: "auto" }}>
       {/* Header with Back Button */}
       <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
         <IconButton
@@ -381,7 +381,7 @@ export default function StudentDetails({ student, onBack }) {
                     {/* Quota explanation */}
                     <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
                       Leave quota: {studentData.academics.attendanceBasedLeaveQuota ?? "—"} of {studentData.academics.totalLeaves ?? 15} days
-                      {" (≥90%→max · ≥75%→80% · ≥60%→50% · <60%→25%)"}
+                      {" (≥75% → full quota · <75% → scales proportionally)"}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -405,15 +405,36 @@ export default function StudentDetails({ student, onBack }) {
                 <CardContent>
                   <Typography variant="h6" gutterBottom>Current Subjects</Typography>
                   <List dense>
-                    {['Mathematics', 'Physics', 'Computer Science', 'English'].map((subject) => (
-                      <ListItem key={subject}>
+                    {(studentData.academics.enrolledCourses || []).map((course) => (
+                      <ListItem key={course._id || course.name}>
                         <ListItemIcon>
-                          <BookIcon fontSize="small" color="primary" />
+                          <BookIcon fontSize="small" color={course.status === "Exempted" ? "success" : "primary"} />
                         </ListItemIcon>
-                        <ListItemText primary={subject} />
-                        <Chip label="In Progress" size="small" color="primary" variant="outlined" />
+                        <ListItemText 
+                          primary={course.name} 
+                          primaryTypographyProps={{ 
+                            color: course.status === "Exempted" ? "text.secondary" : "text.primary",
+                            sx: { textDecoration: course.status === "Exempted" ? "line-through" : "none" }
+                          }} 
+                        />
+                        <Chip 
+                          label={
+                            course.status === "Enrolled" ? "In Progress" : 
+                            course.status === "Pending" ? "Pending Exemption" : 
+                            "Course Exempted"
+                          } 
+                          size="small" 
+                          color={
+                            course.status === "Exempted" ? "success" : 
+                            course.status === "Pending" ? "warning" : "primary"
+                          } 
+                          variant={course.status === "Enrolled" ? "outlined" : "filled"} 
+                        />
                       </ListItem>
                     ))}
+                    {(!studentData.academics.enrolledCourses || studentData.academics.enrolledCourses.length === 0) && (
+                      <Typography variant="body2" color="text.secondary" sx={{ p: 2, textAlign: "center" }}>No courses found</Typography>
+                    )}
                   </List>
                 </CardContent>
               </Card>
@@ -426,7 +447,10 @@ export default function StudentDetails({ student, onBack }) {
           {loading.rewards ? (
             <LinearProgress />
           ) : studentData.rewards.length === 0 ? (
-            <Typography color="text.secondary" align="center">No rewards yet</Typography>
+            <Box sx={{ py: 4, textAlign: "center" }}>
+              <RewardIcon sx={{ fontSize: 40, color: "#E2E8F0", mb: 1 }} />
+              <Typography color="text.secondary" align="center">No rewards yet</Typography>
+            </Box>
           ) : (
             <Grid container spacing={2}>
               {studentData.rewards.map((reward, index) => (
@@ -435,15 +459,16 @@ export default function StudentDetails({ student, onBack }) {
                     <CardContent>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Box>
-                          <Typography variant="subtitle1">{reward.reason}</Typography>
+                          <Typography variant="subtitle1">{reward.description}</Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {new Date(reward.date).toLocaleDateString()}
+                            {reward.createdAt ? new Date(reward.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
                           </Typography>
                         </Box>
                         <Chip
-                          label={`+${reward.points} points`}
+                          label={`+${reward.points} pts`}
                           color="success"
                           size="small"
+                          sx={{ fontWeight: 700 }}
                         />
                       </Box>
                     </CardContent>

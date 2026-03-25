@@ -34,8 +34,8 @@ const initials = (name = "") =>
 
 function StatCard({ label, value, sub, icon, color, loading }) {
   return (
-    <Card sx={{ height: "100%" }}>
-      <CardContent sx={{ p: 2.5 }}>
+    <Card sx={{ height: "100%", display: "flex", flexDirection: "column", flex: 1, width: "100%", minHeight: 200 }}>
+      <CardContent sx={{ p: 2.5, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
         {loading ? (
           <>
             <Skeleton variant="text" width={50} height={40} />
@@ -92,7 +92,7 @@ export default function Dashboard() {
       try {
         const [s, l, p] = await Promise.all([
           api.get("/mentor/mentorstudents"),
-          api.get("/leaverequests"),
+          api.get("/mentor/leaves"),
           api.get("/mentor/placements"),
         ]);
         setStudents(s.data);
@@ -109,8 +109,9 @@ export default function Dashboard() {
 
   const pendingLeaves = leaves.filter((l) => l.status === "pending").length;
   const approvedLeaves = leaves.filter((l) => l.status === "approved").length;
-  const pendingPlacements = placements.filter((p) => p.status === "pending").length;
-  const approvedPlacements = placements.filter((p) => p.status === "approved").length;
+  // Placement status is "Pending Mentor" when awaiting review
+  const pendingPlacements = placements.filter((p) => p.status === "Pending Mentor").length;
+  const approvedPlacements = placements.filter((p) => p.status === "Mentor Verified" || p.status === "approved").length;
   const leaveApprovalRate = leaves.length > 0 ? Math.round((approvedLeaves / leaves.length) * 100) : 0;
   const pendingItems = [
     ...leaves.filter((l) => l.status === "pending").slice(0, 3).map((l) => ({
@@ -119,16 +120,16 @@ export default function Dashboard() {
       color: "#D97706",
       chip: "Leave",
     })),
-    ...placements.filter((p) => p.status === "pending").slice(0, 2).map((p) => ({
+    ...placements.filter((p) => p.status === "Pending Mentor").slice(0, 2).map((p) => ({
       label: p.studentName || "Student",
-      sub: `Placement · ${p.companyName || "Application"}`,
+      sub: `Placement · ${p.company || "Application"}`,
       color: "#4F46E5",
       chip: "Placement",
     })),
   ].slice(0, 5);
 
   return (
-    <Box>
+    <Box sx={{ display: "flex", flexDirection: "column" }}>
       {/* Page header */}
       <Box sx={{ mb: 3.5 }}>
         <Typography sx={{ fontWeight: 800, fontSize: "1.5rem", color: "#0F172A", letterSpacing: "-0.02em" }}>
@@ -140,27 +141,27 @@ export default function Dashboard() {
       </Box>
 
       {/* KPI cards */}
-      <Grid container spacing={2.5} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} lg={3}>
+      <Grid container spacing={2.5} sx={{ mb: 3 }} alignItems="stretch">
+        <Grid item xs={12} sm={6} lg={3} sx={{ display: "flex" }}>
           <StatCard label="Total Students" value={students.length} sub="Assigned to you" icon={<GroupIcon sx={{ fontSize: 18 }} />} color="#4F46E5" loading={loading} />
         </Grid>
-        <Grid item xs={12} sm={6} lg={3}>
+        <Grid item xs={12} sm={6} lg={3} sx={{ display: "flex" }}>
           <StatCard label="Pending Leaves" value={pendingLeaves} sub={`${approvedLeaves} approved`} icon={<LeaveIcon sx={{ fontSize: 18 }} />} color="#D97706" loading={loading} />
         </Grid>
-        <Grid item xs={12} sm={6} lg={3}>
+        <Grid item xs={12} sm={6} lg={3} sx={{ display: "flex" }}>
           <StatCard label="Pending Placements" value={pendingPlacements} sub={`${approvedPlacements} approved`} icon={<PlacementIcon sx={{ fontSize: 18 }} />} color="#0EA5E9" loading={loading} />
         </Grid>
-        <Grid item xs={12} sm={6} lg={3}>
+        <Grid item xs={12} sm={6} lg={3} sx={{ display: "flex" }}>
           <StatCard label="Approval Rate" value={`${leaveApprovalRate}%`} sub={`${leaves.length} total requests`} icon={<RewardsIcon sx={{ fontSize: 18 }} />} color="#16A34A" loading={loading} />
         </Grid>
       </Grid>
 
       {/* Bottom row */}
-      <Grid container spacing={2.5}>
+      <Grid container spacing={2.5} alignItems="stretch">
         {/* Pending actions */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: "100%" }}>
-            <CardContent sx={{ p: 0 }}>
+        <Grid item xs={12} lg={6} sx={{ display: "flex" }}>
+          <Card sx={{ width: "100%", display: "flex", flexDirection: "column", minHeight: 480 }}>
+            <CardContent sx={{ p: 0, flex: 1, display: "flex", flexDirection: "column", minHeight: 480 }}>
               <Box sx={{ px: 2.5, pt: 2.5, pb: 1.5, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <Box>
                   <Typography sx={{ fontWeight: 700, color: "#0F172A", fontSize: "0.95rem" }}>
@@ -259,9 +260,9 @@ export default function Dashboard() {
         </Grid>
 
         {/* Students */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: "100%" }}>
-            <CardContent sx={{ p: 0 }}>
+        <Grid item xs={12} lg={6} sx={{ display: "flex" }}>
+          <Card sx={{ width: "100%", display: "flex", flexDirection: "column", minHeight: 480 }}>
+            <CardContent sx={{ p: 0, flex: 1, display: "flex", flexDirection: "column", minHeight: 480 }}>
               <Box sx={{ px: 2.5, pt: 2.5, pb: 1.5, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <Box>
                   <Typography sx={{ fontWeight: 700, color: "#0F172A", fontSize: "0.95rem" }}>

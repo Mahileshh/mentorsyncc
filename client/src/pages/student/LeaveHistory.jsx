@@ -127,7 +127,7 @@ export default function LeaveHistory() {
     try {
       setLoading(true);
       setError("");
-      const res = await api.get("/leaverequests/my-leaves");
+      const res = await api.get("/student/my-leaves");
       setLeaves(res.data);
       calculateStats(res.data);
     } catch (err) {
@@ -365,25 +365,7 @@ export default function LeaveHistory() {
           bgcolor: alpha(theme.palette.background.paper, 0.5)
         }}
       >
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-          <Typography variant="body2" color="text.secondary">Leave Utilization</Typography>
-          <Typography variant="body2" fontWeight={600}>
-            {stats.totalDays} / 20 days used
-          </Typography>
-        </Box>
-        <LinearProgress 
-          variant="determinate" 
-          value={(stats.totalDays / 20) * 100} 
-          sx={{ 
-            height: 8, 
-            borderRadius: 4,
-            bgcolor: alpha(theme.palette.primary.main, 0.1),
-            '& .MuiLinearProgress-bar': {
-              bgcolor: theme.palette.primary.main,
-              borderRadius: 4
-            }
-          }}
-        />
+       
       </Paper>
 
       {/* Filters */}

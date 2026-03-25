@@ -32,6 +32,7 @@ const navItems = [
   { text: "Leave Requests", path: "/mentor/leaves", icon: <LeaveIcon /> },
   { text: "Placement Requests", path: "/mentor/placements", icon: <PlacementIcon /> },
   { text: "Reward Points", path: "/mentor/rewards", icon: <RewardsIcon /> },
+  { text: "Course Exemptions", path: "/mentor/exemptions", icon: <MenuBookIcon /> }
 ];
 
 export default function MentorLayout() {
@@ -341,7 +342,7 @@ export default function MentorLayout() {
         </Box>
 
         {/* Page Content */}
-        <Box sx={{ flex: 1, p: { xs: 2, md: 3.5 } }}>
+        <Box sx={{ flex: 1, p: { xs: 2, md: 3.5 }, overflowY: "auto", overflowX: "hidden" }}>
           <Outlet />
         </Box>
       </Box>

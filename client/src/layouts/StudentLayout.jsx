@@ -9,6 +9,7 @@ const PAGE_TITLES = {
   "/student/leave-history": "Leave History",
   "/student/placement": "Placement Request",
   "/student/rewards": "My Rewards",
+  "/student/exemptions": "Course Exemptions",
 };
 
 function StudentLayout() {

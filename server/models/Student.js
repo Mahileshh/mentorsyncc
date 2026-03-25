@@ -11,6 +11,10 @@ const studentSchema = new mongoose.Schema({
   attendance: { type: Number, default: 75 },
   rewardPointsTotal: { type: Number, default: 0 },
   totalLeaves: { type: Number, default: 15 },
+  enrolledCourses: [{
+    name: String,
+    status: { type: String, enum: ['Enrolled', 'Pending', 'Exempted'], default: 'Enrolled' }
+  }],
 });
 
 module.exports = mongoose.model("Student", studentSchema);

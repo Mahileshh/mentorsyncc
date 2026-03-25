@@ -180,7 +180,7 @@ export default function Students() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 3, height: "auto" }}>
       {/* Header Section */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
         <Box>
@@ -431,7 +431,7 @@ export default function Students() {
                         att >= 90 ? { label: "Excellent", color: "#16A34A", bg: "#F0FDF4", bar: "success" } :
                         att >= 75 ? { label: "Good",      color: "#4F46E5", bg: "#EEF2FF", bar: "primary" } :
                         att >= 60 ? { label: "Low",       color: "#D97706", bg: "#FFFBEB", bar: "warning" } :
-                                   { label: "Critical",   color: "#DC2626", bg: "#FEF2F2", bar: "error"   };
+                                    { label: "Critical",  color: "#DC2626", bg: "#FEF2F2", bar: "error"   };
                       return (
                         <Box>
                           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.4 }}>

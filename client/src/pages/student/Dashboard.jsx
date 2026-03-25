@@ -14,6 +14,7 @@ import {
   Cancel as CancelIcon,
   School as AttendanceIcon,
   Info as InfoIcon,
+  Book as BookIcon,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
@@ -26,8 +27,8 @@ const STATUS_MAP = {
 
 function KpiCard({ icon, label, value, sub, iconColor }) {
   return (
-    <Card>
-      <CardContent sx={{ p: 2.5 }}>
+    <Card sx={{ height: "100%", display: "flex", flexDirection: "column", flex: 1, width: "100%" }}>
+      <CardContent sx={{ p: 2.5, flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
         <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 2 }}>
           <Box>
             <Typography sx={{ fontSize: "1.9rem", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.02em", lineHeight: 1 }}>
@@ -60,8 +61,8 @@ export default function StudentDashboard() {
     const fetchData = async () => {
       try {
         const [r, l, p, prof] = await Promise.all([
-          api.get("/rewardpoints"),
-          api.get("/leaverequests"),
+          api.get("/student/my-rewards"),
+          api.get("/student/my-leaves"),
           api.get("/student/my-placements"),
           api.get("/student/profile"),
         ]);
@@ -80,19 +81,7 @@ export default function StudentDashboard() {
 
   const totalPoints   = rewards.reduce((a, r) => a + r.points, 0);
   const pendingLeaves = leaves.filter((l) => l.status === "pending").length;
-  const approvedLeaves = leaves.filter((l) => l.status === "approved");
-
-  const usedDays = approvedLeaves.reduce((acc, l) => {
-    const diffDays = Math.ceil(Math.abs(new Date(l.toDate) - new Date(l.fromDate)) / 86400000) + 1;
-    return acc + diffDays;
-  }, 0);
-
   const attendance   = profile?.attendance ?? 75;
-  const totalAllowed = profile?.totalLeaves || 15;
-  // Use the server-computed attendance-based quota
-  const leaveQuota   = profile?.attendanceBasedLeaveQuota ?? totalAllowed;
-  const remaining    = Math.max(0, leaveQuota - usedDays);
-  const pct          = leaveQuota > 0 ? Math.round((remaining / leaveQuota) * 100) : 0;
 
   // Attendance tier display
   const getAttendanceTier = (pct) => {
@@ -133,8 +122,8 @@ export default function StudentDashboard() {
       </Box>
 
       {/* KPI row */}
-      <Grid container spacing={2.5} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} lg={3}>
+      <Grid container spacing={2.5} sx={{ mb: 3 }} alignItems="stretch">
+        <Grid item xs={12} sm={6} md={4} sx={{ display: "flex" }}>
           <KpiCard
             icon={<TrophyIcon sx={{ fontSize: 18 }} />}
             label="Reward Points"
@@ -143,19 +132,11 @@ export default function StudentDashboard() {
             iconColor="#D97706"
           />
         </Grid>
-        <Grid item xs={12} sm={6} lg={3}>
-          <KpiCard
-            icon={<LeaveIcon sx={{ fontSize: 18 }} />}
-            label="Leave Quota"
-            value={`${remaining}/${leaveQuota}`}
-            sub={`Based on ${attendance}% attendance`}
-            iconColor="#4F46E5"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} lg={3}>
+
+        <Grid item xs={12} sm={6} md={4} sx={{ display: "flex" }}>
           {/* Attendance card */}
-          <Card>
-            <CardContent sx={{ p: 2.5 }}>
+          <Card sx={{ height: "100%", display: "flex", flexDirection: "column", flex: 1, width: "100%" }}>
+            <CardContent sx={{ p: 2.5, flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 1.5 }}>
                 <Box>
                   <Typography sx={{ fontSize: "1.9rem", fontWeight: 800, color: tier.color, letterSpacing: "-0.02em", lineHeight: 1 }}>
@@ -184,7 +165,7 @@ export default function StudentDashboard() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} lg={3}>
+        <Grid item xs={12} sm={6} md={4} sx={{ display: "flex" }}>
           <KpiCard
             icon={<PlacementIcon sx={{ fontSize: 18 }} />}
             label="Placement"
@@ -196,108 +177,82 @@ export default function StudentDashboard() {
       </Grid>
 
       {/* Details row */}
-      <Grid container spacing={2.5}>
-        {/* Leave balance */}
-        <Grid item xs={12} md={5}>
-          <Card sx={{ height: "100%" }}>
-            <CardContent sx={{ p: 0 }}>
-              <Box sx={{ px: 2.5, pt: 2.5, pb: 1.5 }}>
-                <Typography sx={{ fontWeight: 700, color: "#0F172A", fontSize: "0.95rem" }}>
-                  Leave Balance
-                </Typography>
-                <Typography sx={{ fontSize: "0.75rem", color: tier.color, mt: 0.2, fontWeight: 600 }}>
-                  Quota based on attendance ({tier.label})
-                </Typography>
-              </Box>
-              <Divider />
-              <Box sx={{ px: 2.5, py: 2.5 }}>
-                {/* Balance bar */}
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-                  <Box>
-                    <Typography sx={{ fontSize: "0.8rem", fontWeight: 600, color: "#374151" }}>
-                      Days remaining
-                    </Typography>
-                    <Typography sx={{ fontSize: "0.7rem", color: "#94A3B8" }}>
-                      Attendance {attendance}% → {leaveQuota}d quota (of {totalAllowed}d max)
-                    </Typography>
-                  </Box>
-                  <Typography sx={{ fontSize: "0.8rem", fontWeight: 700, color: "#4F46E5" }}>
-                    {remaining} / {leaveQuota}
+      <Grid container spacing={2.5} alignItems="stretch">
+
+        {/* Current Subjects List */}
+        <Grid item xs={12} md={5} sx={{ display: "flex" }}>
+          <Card sx={{ width: "100%", display: "flex", flexDirection: "column" }}>
+            <CardContent sx={{ p: 0, flex: 1, display: "flex", flexDirection: "column" }}>
+              <Box sx={{ px: 2.5, pt: 2.5, pb: 1.5, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <Box>
+                  <Typography sx={{ fontWeight: 700, color: "#0F172A", fontSize: "0.95rem" }}>
+                    Current Subjects
+                  </Typography>
+                  <Typography sx={{ fontSize: "0.75rem", color: "#94A3B8", mt: 0.2 }}>
+                    Your enrolled department courses
                   </Typography>
                 </Box>
-                <LinearProgress
-                  variant="determinate"
-                  value={pct}
-                  sx={{
-                    height: 6,
-                    borderRadius: 99,
-                    bgcolor: "#E0E7FF",
-                    mb: 1.5,
-                    "& .MuiLinearProgress-bar": { bgcolor: tier.color, borderRadius: 99 },
-                  }}
-                />
-                {/* Tier rule note */}
-                <Box sx={{ mb: 2, p: 1.25, borderRadius: "7px", bgcolor: tier.bg, border: `1px solid ${tier.color}33` }}>
-                  <Typography sx={{ fontSize: "0.7rem", color: tier.color, fontWeight: 700, mb: 0.2 }}>
-                    {tier.label} Attendance ({attendance}%)
-                  </Typography>
-                  <Typography sx={{ fontSize: "0.68rem", color: "#64748B" }}>
-                    ≥90% → {totalAllowed}d &nbsp;·&nbsp; ≥75% → {Math.floor(totalAllowed * 0.8)}d &nbsp;·&nbsp; ≥60% → {Math.floor(totalAllowed * 0.5)}d &nbsp;·&nbsp; &lt;60% → {Math.floor(totalAllowed * 0.25)}d
-                  </Typography>
-                </Box>
-
-                {/* Leave stats */}
-                <Grid container spacing={1.5}>
-                  {[{ label: "Total Allowed", value: totalAllowed, color: "#64748B" },
-                    { label: "Quota (Att.)", value: leaveQuota, color: tier.color },
-                    { label: "Used", value: usedDays, color: "#D97706" },
-                    { label: "Remaining", value: remaining, color: "#16A34A" },
-                    { label: "Pending", value: pendingLeaves, color: "#4F46E5" },
-                    { label: "Attendance", value: `${attendance}%`, color: tier.color },
-                  ].map((s) => (
-                    <Grid item xs={6} key={s.label}>
-                      <Box
-                        sx={{
-                          p: 1.5,
-                          borderRadius: "7px",
-                          bgcolor: "#F8FAFC",
-                          border: "1px solid #E2E8F0",
-                        }}
-                      >
-                        <Typography sx={{ fontSize: "1.1rem", fontWeight: 700, color: s.color }}>
-                          {s.value}
-                        </Typography>
-                        <Typography sx={{ fontSize: "0.72rem", color: "#94A3B8" }}>
-                          {s.label}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Box>
-
-              <Divider />
-              <Box sx={{ px: 2.5, py: 1.25 }}>
                 <Button
                   size="small"
                   endIcon={<ArrowIcon fontSize="small" />}
-                  onClick={() => navigate("/student/apply-leave")}
-                  sx={{ textTransform: "none", fontWeight: 600, color: "#4F46E5", fontSize: "0.8rem", p: 0 }}
+                  onClick={() => navigate("/student/exemptions")}
+                  sx={{ textTransform: "none", fontWeight: 600, color: "#4F46E5", fontSize: "0.8rem" }}
                 >
-                  Apply for leave
+                  Manage
                 </Button>
               </Box>
+              <Divider />
+              {(!profile?.enrolledCourses || profile?.enrolledCourses?.length === 0) ? (
+                <Box sx={{ py: 3, textAlign: "center" }}>
+                  <Typography sx={{ color: "#94A3B8", fontSize: "0.855rem" }}>No courses found</Typography>
+                </Box>
+              ) : (
+                <List disablePadding>
+                  {profile.enrolledCourses.map((course, i) => (
+                    <Box key={course._id || course.name}>
+                      <ListItem sx={{ px: 2.5, py: 1.5 }}>
+                        <Avatar sx={{ bgcolor: course.status === "Exempted" ? "#F0FDF4" : "#EEF2FF", color: course.status === "Exempted" ? "#16A34A" : "#4F46E5", width: 32, height: 32, mr: 2 }}>
+                          <BookIcon sx={{ fontSize: 16 }} />
+                        </Avatar>
+                        <ListItemText
+                          primary={course.name}
+                          primaryTypographyProps={{
+                            color: course.status === "Exempted" ? "text.secondary" : "#0F172A",
+                            sx: { 
+                              fontSize: "0.84rem", 
+                              fontWeight: 600,
+                              textDecoration: course.status === "Exempted" ? "line-through" : "none" 
+                            }
+                          }}
+                        />
+                        <Chip
+                          label={
+                            course.status === "Enrolled" ? "Enrolled" :
+                            course.status === "Pending" ? "Pending Exemption" :
+                            "Course Exempted"
+                          }
+                          size="small"
+                          sx={{
+                            height: 20, fontSize: "0.68rem", fontWeight: 600,
+                            bgcolor: course.status === "Exempted" ? "#F0FDF4" : course.status === "Pending" ? "#FFFBEB" : "#EEF2FF",
+                            color: course.status === "Exempted" ? "#16A34A" : course.status === "Pending" ? "#D97706" : "#4F46E5",
+                            border: course.status === "Enrolled" ? "1px solid #E2E8F0" : "none"
+                          }}
+                        />
+                      </ListItem>
+                      {i < profile.enrolledCourses.length - 1 && <Divider sx={{ mx: 2 }} />}
+                    </Box>
+                  ))}
+                </List>
+              )}
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Recent leaves + placement status */}
-        <Grid item xs={12} md={7}>
-          <Grid container spacing={2.5} direction="column">
-            {/* Recent leaves */}
-            <Grid item>
-              <Card>
-                <CardContent sx={{ p: 0 }}>
+        {/* Recent leaves */}
+        <Grid item xs={12} md={4} sx={{ display: "flex" }}>
+          <Card sx={{ width: "100%", display: "flex", flexDirection: "column" }}>
+            <CardContent sx={{ p: 0, flex: 1, display: "flex", flexDirection: "column" }}>
                   <Box sx={{ px: 2.5, pt: 2.5, pb: 1.5, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <Box>
                       <Typography sx={{ fontWeight: 700, color: "#0F172A", fontSize: "0.95rem" }}>
@@ -356,12 +311,12 @@ export default function StudentDashboard() {
                   )}
                 </CardContent>
               </Card>
-            </Grid>
+        </Grid>
 
-            {/* Placement status */}
-            <Grid item>
-              <Card>
-                <CardContent sx={{ px: 2.5, py: 2 }}>
+        {/* Placement status */}
+        <Grid item xs={12} md={3} sx={{ display: "flex" }}>
+            <Card sx={{ width: "100%", display: "flex", flexDirection: "column" }}>
+              <CardContent sx={{ px: 2.5, py: 2, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <Box>
                       <Typography sx={{ fontWeight: 700, color: "#0F172A", fontSize: "0.95rem" }}>
@@ -403,8 +358,6 @@ export default function StudentDashboard() {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
-          </Grid>
         </Grid>
       </Grid>
     </Box>

@@ -29,6 +29,7 @@ const navItems = [
   { text: "Leave History", path: "/student/leave-history", icon: <HistoryIcon fontSize="small" /> },
   { text: "Placement Request", path: "/student/placement", icon: <PlacementIcon fontSize="small" /> },
   { text: "My Rewards", path: "/student/rewards", icon: <RewardsIcon fontSize="small" /> },
+  { text: "Course Exemptions", path: "/student/exemptions", icon: <LogoIcon fontSize="small" /> },
 ];
 
 function Sidebar() {

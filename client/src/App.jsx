@@ -8,11 +8,13 @@ import Students from "./pages/mentor/Students";
 import LeaveRequests from "./pages/mentor/LeaveRequests";
 import PlacementRequests from "./pages/mentor/PlacementRequests";
 import RewardPoints from "./pages/mentor/RewardPoints";
+import MentorCourseExemptions from "./pages/mentor/CourseExemptions";
 import StudentDashboard from "./pages/student/Dashboard";
 import ApplyLeave from "./pages/student/ApplyLeave";
 import LeaveHistory from "./pages/student/LeaveHistory";
 import PlacementRequest from "./pages/student/PlacementRequest";
 import MyRewards from "./pages/student/MyRewards";
+import StudentCourseExemptions from "./pages/student/CourseExemptions";
 
 function App() {
   return (
@@ -27,6 +29,7 @@ function App() {
           <Route path="leaves" element={<LeaveRequests />} />
           <Route path="placements" element={<PlacementRequests />} />
           <Route path="rewards" element={<RewardPoints />} />
+          <Route path="exemptions" element={<MentorCourseExemptions />} />
         </Route>
       </Route>
 
@@ -38,6 +41,7 @@ function App() {
           <Route path="leave-history" element={<LeaveHistory />} />
           <Route path="placement" element={<PlacementRequest />} />
           <Route path="rewards" element={<MyRewards />} />
+          <Route path="exemptions" element={<StudentCourseExemptions />} />
         </Route>
       </Route>
 

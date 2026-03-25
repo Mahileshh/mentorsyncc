@@ -10,7 +10,11 @@ router.get("/leaves", auth, role(["mentor"]), mentor.getMyLeaves);
 router.get("/placements", auth, role(["mentor"]), mentor.getMyPlacements);
 router.patch("/placements/:id", auth, role(["mentor"]), mentor.updatePlacement);
 
+router.get("/exemptions", auth, role(["mentor"]), mentor.getMyExemptions);
+router.patch("/exemptions/:id", auth, role(["mentor"]), mentor.updateExemption);
+
 router.get("/students/:studentId/rewards", auth, role(["mentor"]), mentor.getStudentRewards);
+router.post("/students/:studentId/rewards", auth, role(["mentor"]), mentor.awardRewardPoints);
 router.get("/students/:studentId/leaves", auth, role(["mentor"]), mentor.getStudentLeaves);
 router.get("/students/:studentId/placements", auth, role(["mentor"]), mentor.getStudentPlacements);
 router.get("/students/:studentId/academics", auth, role(["mentor"]), mentor.getStudentAcademics);

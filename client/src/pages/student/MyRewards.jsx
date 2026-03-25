@@ -23,7 +23,7 @@ export default function MyRewards() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/rewardpoints")
+    api.get("/student/my-rewards")
       .then((res) => setRewards(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -33,14 +33,6 @@ export default function MyRewards() {
   const nextLevel = Math.ceil(total / 500) * 500;
   const progress = ((total % 500) / 500) * 100;
 
-  const LEVELS = [
-    { min: 0,    label: "Bronze",   color: "#CD7F32", bg: "#FDF3E7" },
-    { min: 500,  label: "Silver",   color: "#64748B", bg: "#F1F5F9" },
-    { min: 1000, label: "Gold",     color: "#D97706", bg: "#FFFBEB" },
-    { min: 2000, label: "Platinum", color: "#4F46E5", bg: "#EEF2FF" },
-  ];
-
-  const level = [...LEVELS].reverse().find((l) => total >= l.min) ?? LEVELS[0];
 
   return (
     <Box>
@@ -75,9 +67,9 @@ export default function MyRewards() {
               </Avatar>
             </Box>
             <Box sx={{ mb: 0.75, display: "flex", justifyContent: "space-between" }}>
-              <Typography sx={{ fontSize: "0.73rem", color: "#94A3B8" }}>
+              {/* <Typography sx={{ fontSize: "0.73rem", color: "#94A3B8" }}>
                 {total % 500} / 500 to next milestone
-              </Typography>
+              </Typography> */}
               <Typography sx={{ fontSize: "0.73rem", fontWeight: 700, color: "#4F46E5" }}>
                 {Math.round(progress)}%
               </Typography>
@@ -87,25 +79,6 @@ export default function MyRewards() {
               value={progress}
               sx={{ height: 4, borderRadius: 99, bgcolor: "#EEF2FF", "& .MuiLinearProgress-bar": { bgcolor: "#4F46E5", borderRadius: 99 } }}
             />
-          </CardContent>
-        </Card>
-
-        {/* Level */}
-        <Card sx={{ flex: "1 1 180px" }}>
-          <CardContent sx={{ p: 2.5 }}>
-            <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-              <Box>
-                <Typography sx={{ fontSize: "1.4rem", fontWeight: 800, color: level.color, letterSpacing: "-0.01em", lineHeight: 1 }}>
-                  {level.label}
-                </Typography>
-                <Typography sx={{ fontSize: "0.82rem", fontWeight: 600, color: "#64748B", mt: 0.5 }}>
-                  Current Level
-                </Typography>
-              </Box>
-              <Avatar sx={{ width: 38, height: 38, bgcolor: level.bg, color: level.color, borderRadius: "8px" }}>
-                <MedalIcon sx={{ fontSize: 18 }} />
-              </Avatar>
-            </Box>
           </CardContent>
         </Card>
 
@@ -133,9 +106,7 @@ export default function MyRewards() {
             <Typography sx={{ fontWeight: 700, color: "#0F172A", fontSize: "0.95rem" }}>
               Points History
             </Typography>
-            <Typography sx={{ fontSize: "0.75rem", color: "#94A3B8", mt: 0.2 }}>
-              All reward entries from your mentor
-            </Typography>
+           
           </Box>
           <Divider />
           {loading ? (
@@ -173,8 +144,8 @@ export default function MyRewards() {
                       />
                     </TableCell>
                     <TableCell sx={{ color: "#64748B" }}>
-                      {r.updatedAt
-                        ? new Date(r.updatedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+                      {r.createdAt
+                        ? new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
                         : "—"}
                     </TableCell>
                   </TableRow>

@@ -213,14 +213,6 @@ export default function LeaveRequests() {
       gradient: `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.08)} 0%, ${alpha(theme.palette.error.light, 0.04)} 100%)`,
       subLabel: "Requests declined",
     },
-    {
-      label: "Leave Left",
-      value: leaveLeft,
-      icon: <LeaveLeftIcon />,
-      iconColor: "#7C3AED",
-      gradient: `linear-gradient(135deg, ${alpha("#7C3AED", 0.08)} 0%, ${alpha("#A78BFA", 0.04)} 100%)`,
-      subLabel: `Out of ${TOTAL_LEAVE_QUOTA} quota`,
-    },
   ];
 
   return (
@@ -250,7 +242,7 @@ export default function LeaveRequests() {
       {/* ── Stat Cards ── */}
       <Grid container spacing={2} sx={{ mb: 3.5 }}>
         {stats.map((s) => (
-          <Grid item xs={12} sm={6} md={12 / 5} key={s.label}>
+          <Grid item xs={12} sm={6} md={3} key={s.label}>
             <StatCard {...s} />
           </Grid>
         ))}
