@@ -461,6 +461,7 @@ export default function LeaveHistory() {
             <TableRow>
               <TableCell sx={{ fontWeight: 600 }}>From Date</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>To Date</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Reason</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Duration</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
@@ -508,6 +509,17 @@ export default function LeaveHistory() {
                       <CalendarIcon fontSize="small" sx={{ color: 'text.secondary' }} />
                       {formatDate(leave.toDate)}
                     </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={leave.leaveType || "Leave"}
+                       sx={{ 
+                         bgcolor: alpha(theme.palette.primary.main, 0.1),
+                         color: theme.palette.primary.main,
+                         fontWeight: 500
+                       }}
+                    />
                   </TableCell>
                   <TableCell>
                     <Typography 
@@ -636,6 +648,15 @@ export default function LeaveHistory() {
                   />
                 </ListItem>
 
+                <ListItem>
+                  <ListItemIcon>
+                    <EventIcon color="action" />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary="Type"
+                    secondary={selectedLeave.leaveType || "Leave"}
+                  />
+                </ListItem>
                 <ListItem>
                   <ListItemIcon>
                     <DescriptionIcon color="action" />

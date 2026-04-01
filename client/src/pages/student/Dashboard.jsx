@@ -293,7 +293,7 @@ export default function StudentDashboard() {
                               }
                             >
                               <ListItemText
-                                primary={<Typography sx={{ fontSize: "0.84rem", fontWeight: 600, color: "#0F172A" }}>{l.reason?.slice(0, 50) || "Leave request"}</Typography>}
+                                primary={<Typography sx={{ fontSize: "0.84rem", fontWeight: 600, color: "#0F172A" }}>{l.leaveType || "Leave"} — {l.reason?.slice(0, 30) || "Leave request"}</Typography>}
                                 secondary={
                                   <Typography sx={{ fontSize: "0.73rem", color: "#94A3B8" }}>
                                     {l.fromDate ? new Date(l.fromDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—"}

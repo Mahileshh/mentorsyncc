@@ -47,7 +47,7 @@ export default function ApplyLeave() {
     reason: "",
     fromDate: "",
     toDate: "",
-    leaveType: "full-day",
+    leaveType: "Leave",
     contactNumber: "",
     alternateArrangements: ""
   });
@@ -100,9 +100,19 @@ export default function ApplyLeave() {
   }, []);
 
   const leaveTypes = [
-    { value: "full-day", label: "Full Day" },
-    { value: "half-day", label: "Half Day" },
-    { value: "short-leave", label: "Short Leave (Hours)" }
+    { value: "OnDuty - Technical Competition", label: "OnDuty - Technical Competition" },
+    { value: "OnDuty - Sports", label: "OnDuty - Sports" },
+    { value: "OnDuty - Internship", label: "OnDuty - Internship" },
+    { value: "OnDuty - NCC / NSS Activities", label: "OnDuty - NCC / NSS Activities" },
+    { value: "OnDuty - Events", label: "OnDuty - Events" },
+    { value: "OnDuty - Club Activities", label: "OnDuty - Club Activities" },
+    { value: "Medical Leave", label: "Medical Leave" },
+    { value: "Leave", label: "Leave" },
+    { value: "OutPass - Hostel", label: "OutPass - Hostel" },
+    { value: "OutPass - Others", label: "OutPass - Others" },
+    { value: "HalfDayOD - Technical Competition", label: "HalfDayOD - Technical Competition" },
+    { value: "HalfDayOD - Sports", label: "HalfDayOD - Sports" },
+    { value: "HalfDayOD - Others", label: "HalfDayOD - Others" }
   ];
 
   const handleChange = (field) => (event) => {
@@ -187,7 +197,7 @@ export default function ApplyLeave() {
         reason: "",
         fromDate: "",
         toDate: "",
-        leaveType: "full-day",
+        leaveType: "Leave",
         contactNumber: "",
         alternateArrangements: ""
       });
@@ -321,22 +331,20 @@ export default function ApplyLeave() {
       content: (
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <FormControl component="fieldset">
-              <FormLabel component="legend">Leave Type</FormLabel>
-              <RadioGroup
-                row
+            <FormControl fullWidth>
+              <InputLabel id="leave-type-label">Leave Type</InputLabel>
+              <Select
+                labelId="leave-type-label"
                 value={formData.leaveType}
                 onChange={handleChange("leaveType")}
+                label="Leave Type"
               >
                 {leaveTypes.map((type) => (
-                  <FormControlLabel
-                    key={type.value}
-                    value={type.value}
-                    control={<Radio />}
-                    label={type.label}
-                  />
+                  <MenuItem key={type.value} value={type.value}>
+                    {type.label}
+                  </MenuItem>
                 ))}
-              </RadioGroup>
+              </Select>
             </FormControl>
           </Grid>
 

@@ -315,10 +315,11 @@ export default function LeaveRequests() {
           sx={{
             borderRadius: 3,
             border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
-            overflow: "hidden",
+            overflowX: "auto",
+            overflowY: "hidden"
           }}
         >
-          <Table>
+          <Table sx={{ minWidth: 800 }}>
             <TableHead>
               <TableRow
                 sx={{
@@ -334,6 +335,7 @@ export default function LeaveRequests() {
                 }}
               >
                 <TableCell>Student</TableCell>
+                <TableCell>Type</TableCell>
                 <TableCell>Reason</TableCell>
                 <TableCell>Duration</TableCell>
                 <TableCell>Status</TableCell>
@@ -386,6 +388,15 @@ export default function LeaveRequests() {
                             {leave.studentName}
                           </Typography>
                         </Box>
+                      </TableCell>
+
+                      {/* Type */}
+                      <TableCell>
+                        <Chip
+                          label={leave.leaveType || "Leave"}
+                          size="small"
+                          sx={{ fontWeight: 600, fontSize: "0.72rem", borderRadius: 1.5, bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main }}
+                        />
                       </TableCell>
 
                       {/* Reason */}
@@ -554,6 +565,18 @@ export default function LeaveRequests() {
               </Box>
 
               <Divider sx={{ mb: 2.5 }} />
+
+              {/* Type */}
+              <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={0.75}>
+                <EventIcon sx={{ fontSize: 13, mr: 0.5, verticalAlign: "middle" }} />
+                TYPE OF LEAVE
+              </Typography>
+              <Paper
+                variant="outlined"
+                sx={{ p: 1.5, borderRadius: 2.5, bgcolor: alpha(theme.palette.background.default, 0.5), mb: 2.5 }}
+              >
+                <Typography variant="body2" fontWeight={600}>{selectedLeave.leaveType || "Leave"}</Typography>
+              </Paper>
 
               {/* Reason */}
               <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={0.75}>

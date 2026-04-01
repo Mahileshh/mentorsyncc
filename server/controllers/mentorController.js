@@ -37,11 +37,11 @@ exports.getMyLeaves = async (req, res) => {
       })
       .sort({ fromDate: -1 });
 
-    // 3. Flatten the data for the frontend
     const formattedLeaves = leaves.map(l => ({
       _id: l._id,
       studentName: l.studentId?.userId?.name || "Unknown Student",
       reason: l.reason,
+      leaveType: l.leaveType,
       fromDate: l.fromDate,
       toDate: l.toDate,
       status: l.status.toLowerCase() // Send lowercase to match frontend logic

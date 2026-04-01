@@ -492,7 +492,12 @@ export default function StudentDetails({ student, onBack }) {
                   <Card variant="outlined" sx={{ borderRadius: 2 }}>
                     <CardContent>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant="subtitle1">{leave.reason}</Typography>
+                        <Box>
+                          <Typography variant="caption" color="primary" sx={{ fontWeight: 700, display: "block", mb: 0.5 }}>
+                            {leave.leaveType || "Leave"}
+                          </Typography>
+                          <Typography variant="subtitle1" sx={{ lineHeight: 1.2 }}>{leave.reason}</Typography>
+                        </Box>
                         <Chip
                           label={leave.status}
                           size="small"

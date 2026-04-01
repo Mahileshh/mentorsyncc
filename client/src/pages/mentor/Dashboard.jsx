@@ -116,7 +116,7 @@ export default function Dashboard() {
   const pendingItems = [
     ...leaves.filter((l) => l.status === "pending").slice(0, 3).map((l) => ({
       label: l.studentName || "Student",
-      sub: `Leave · ${l.reason?.slice(0, 35) || "Leave request"}`,
+      sub: `${l.leaveType || "Leave"} · ${l.reason?.slice(0, 25) || "Leave request"}`,
       color: "#D97706",
       chip: "Leave",
     })),
