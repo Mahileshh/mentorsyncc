@@ -27,10 +27,6 @@ const startServer = async () => {
     app.use("/api/student", studentRoutes);
     app.use("/api", publicRoutes);
 
-    app.get("/", (req, res) => {
-      res.send("MentorSync API is running 🚀");
-    });
-
     // Global Error Handler
     app.use(errorHandler);
 
